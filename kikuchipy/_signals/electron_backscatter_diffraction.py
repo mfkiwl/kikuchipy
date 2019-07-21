@@ -29,12 +29,10 @@ from h5py import File
 from hyperspy.signals import Signal2D, BaseSignal
 from hyperspy._lazy_signals import LazySignal2D
 from hyperspy.learn.mva import LearningResults
-from skimage.transform import radon
 from pyxem.signals.electron_diffraction import ElectronDiffraction
 from dask.diagnostics import ProgressBar
 from hyperspy.misc.utils import dummy_context_manager
 from kikuchipy import io
-from kikuchipy._signals.radon_transform import RadonTransform
 from kikuchipy.utils.expt_utils import (remove_dead,
                                         find_deadpixels_single_pattern,
                                         plot_markers_single_pattern,
@@ -527,54 +525,6 @@ class EBSD(Signal2D):
         """
         return ElectronDiffraction.plot_interactive_virtual_image(self, roi,
                                                                   **kwargs)
-
-    def get_radon_transform(self, theta=None, circle=True,
-                            show_progressbar=True, inplace=False):
-        """Create a RadonTransform signal.
-
-        Parameters
-        ----------
-        theta : numpy array, optional
-            Projection angles in degrees. If None (default), the value
-            is set to np.arange(180).
-        circle : bool, optional
-            If True (default), assume that the image is zero outside the
-            inscribed circle. The width of each projection then becomes
-            equal to the smallest signal shape.
-        show_progressbar : bool, optional
-            If True (default), show progressbar during transformation.
-        inplace : bool, optional
-            If True (default is False), the EBSD signal (self) is
-            replaced by the RadonTransform signal (return).
-
-        Returns
-        -------
-        sinograms: :obj:`kikuchipy.signals.RadonTransform`
-            Corresponding RadonTransform signal (sinograms) computed
-            from the EBSD signal. The rotation axis lie at index
-            sinograms.data[0,0].shape[0]/2
-
-        References
-        ----------
-        http://scikit-image.org/docs/dev/auto_examples/transform/
-        plot_radon_transform.html
-        http://scikit-image.org/docs/dev/api/skimage.transform.html
-        #skimage.transform.radon
-        """
-        # TODO: Remove diagonal artifact lines.
-        # TODO: Can we get it to work faster?
-
-        warnings.filterwarnings("ignore", message="The default of `circle` \
-        in `skimage.transform.radon` will change to `True` in version 0.15.")
-        # Ignore this warning, since this function is mapped and would
-        # otherwise slow down this function by printing many warning
-        # messages.
-
-        sinograms = self.map(radon, theta=theta, circle=circle,
-                             show_progressbar=show_progressbar,
-                             inplace=inplace)
-
-        return RadonTransform(sinograms)
 
     def save(self, filename=None, overwrite=None, extension=None,
              **kwargs):
